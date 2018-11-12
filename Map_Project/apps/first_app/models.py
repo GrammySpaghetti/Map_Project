@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import validate_email, MaxValueValidator, MinValueValidator
 import bcrypt
+from datetime import datetime
 # Create your models here.
 class UserManager(models.Manager):
     def validation(self, postdata):
@@ -24,16 +25,15 @@ class UserManager(models.Manager):
             print('success')
         return errors
     def login_validation(self,postdata):
-        errors={}
+        errors = {}
         try:
-            user = User.objects.get(email = postdata['username'])
+            user = User.objects.get(email=postdata['username'])
             print('email')
         except Exception as e:
             errors['login'] = 'invalid login'
             print(e)
         if bcrypt.checkpw(postdata['pw'].encode(), user.password.encode()) == False:
             errors['login'] = 'invalid login'
-
         return errors
 
 
@@ -47,6 +47,13 @@ class User(models.Model):
     objects = UserManager()
 
 
+class Category(models.Model):
+    cat = models.CharField(max_length = 255)
+    icon = models.CharField(max_length = 255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
 class Node(models.Model):
     title = models.CharField(max_length = 255)
     lat = models.FloatField()
@@ -55,7 +62,4 @@ class Node(models.Model):
     desc = models.TextField(max_length = 1000)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-
-class Category(models.Model):
-    cat = models.CharField(max_length = 255)
+    category = models.ForeignKey(Category, related_name='nodes')
