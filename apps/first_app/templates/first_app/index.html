@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Map Project</title>
+    <!-- <script type="text/javascript" src='../../static/js/index-javascript.js'></script> -->
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="../../static/first_app/css/index_stylesheet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA==" crossorigin=""></script>
+    <script type="text/javascript" src='../../static/first_app/js/leaflet-search.js'></script>
+    <link rel="stylesheet" href="../../static/first_app/css/leaflet-search.css">
+    <script type="text/javascript" src='../../static/first_app/js/sorting.js'></script>
+    <script type="text/javascript" src='../../static/first_app/js/data.js'></script>
+
+  </head>
+  <body>
+    {% if messages %}
+        {% for message in messages %}
+            <p class='text-success'>{{message}}</p>
+        {% endfor %}
+    {% endif %}
+    <div class="">
+
+
+    <div class='row bg-primary'>
+      <h1 class='d-inline-block col-lg-7 ml-3 text-white'>Welcome to Hiker Hut!</h1>
+      <!-- <form class="form-row" id='search' action="" method="">
+        <input type="text" class='form-control d-inline-block m-1' name="search" placeholder="Search...">
+        <button type="button" class='btn btn-success d-inline-block m-1' name="submit">Search</button>
+      </form> -->
+    </div>
+    <table class="table table-striped table-fixed col-lg-5 d-inline-block m-2" id='data_table'>
+      <!-- <h4 class='ml-2'>Map Nodes:</h4> -->
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Node Points</th>
+                <!-- <th scope="col">Description</th>
+                <th scope="col">Location</th>
+                <th scope="col">Created By:</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in nodes %}
+                <tr id='{{i.id}}'>
+                    <th scope="row" class='myClass'>Node Title: {{i.title}}</th>
+                    <td class='myClass'>Description: {{ i.desc }}</td>
+                    <td class='myClass'>Lat: {{ i.lat }} || Long: {{ i.long }}</td>
+                    <td class='myClass'>Category: {{i.category.cat}} </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <div id="mapid" class="col-lg-6 d-inline-block align-top m-2">
+
+    </div>
+    </div>
+
+    <script type="text/javascript">
+    //SET INITIAL MAP VIEW
+    var mymap = L.map('mapid').setView([36, -100], 4);
+
+    // OPEN TOPO TILES
+    L.tileLayer('https://{id}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, map style: © <a href="https://www.opentopomap.org/">OpenTopoMap</a> <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>',
+      id: 'c',
+      maxZoom: '17',
+    }).addTo(mymap);
+
+    // SET MARKER IMAGES
+    var hikeIcon = L.icon({
+      iconUrl: "../../static/first_app/img/hiking.png",
+      iconSize: [32, 37],
+      iconAnchor: [19, 36],
+      popupAnchor: [-3, -31],
+    });
+    var campsiteIcon = L.icon({
+      iconUrl: "../../static/first_app/img/campfire-2.png",
+      iconSize: [32, 37],
+      iconAnchor: [19, 36],
+      popupAnchor: [-3, -31],
+    });
+    var climbingIcon = L.icon({
+      iconUrl: "../../static/first_app/img/climbing.png",
+      iconSize: [32, 37],
+      iconAnchor: [19, 36],
+      popupAnchor: [-3, -31],
+    });
+    var shelterIcon = L.icon({
+      iconUrl: "../../static/first_app/img/shelter.png",
+      iconSize: [32, 37],
+      iconAnchor: [19, 36],
+      popupAnchor: [-3, -31],
+    });
+    var rangerstationIcon = L.icon({
+      iconUrl: "../../static/first_app/img/ranger_station.png",
+      iconSize: [32, 37],
+      iconAnchor: [19, 36],
+      popupAnchor: [-3, -31],
+    });
+    var cowabductionIcon = L.icon({
+      iconUrl: "../../static/first_app/img/cowabduction.png",
+      iconSize: [32, 37],
+      iconAnchor: [19, 36],
+      popupAnchor: [-3, -31],
+    });
+    var popup = L.popup({
+      minWidth: 300
+    });
+
+
+    // ADD NEW MARKER
+    function onMapClick(e) {
+      popup
+        .setLatLng(e.latlng)
+        .setContent(
+          `<form action='/process/' class='form-group' method='POST'>
+          {% csrf_token %}
+          <label for="title" class='row'>Title:</label>
+          <input class='row form-control m-1' type='text' name='title' placeholder='Title'>
+          <label for="category" class='row'>Category:</label>
+            <select class="form-control m-1" id="" name='category'>
+              <option>Hiking</option>
+              <option>Camp Site</option>
+              <option>Climbing</option>
+              <option>Shelter</option>
+              <option>Ranger Station</option>
+              <option>Cow Abduction</option>
+            </select>
+          <label for="description" class='row'>Description:</label>
+          <textarea class='row form-control m-1' rows='3' name='desc' placeholder='Description'></textarea>
+          <input type='hidden' name='lat' value='${e.latlng.lat.toFixed(4)}'>
+          <input type='hidden' name='long' value='${e.latlng.lng.toFixed(4)}'>
+          <button type='submit' value='submit' class='btn btn-dark m-1'>Add</button>
+          </form>`
+        )
+        .openOn(mymap);
+    }
+    mymap.on('click', onMapClick);
+
+    // DEFINE MARKER LAYER
+    var markersLayer = new L.LayerGroup();
+    mymap.addLayer(markersLayer);
+    // CREATE MARKERS FROM DATABASE
+    var myItems = [
+      {% for node in nodes %}
+      {desc:'{{node.desc}}', lat: {{node.lat}}, long: {{node.long}}, title: '{{node.title}}', id: '{{node.id}}', cat: {{node.category.icon}}},
+      {% endfor %}
+    ]
+
+    // ADD MARKERS FROM DATABASE
+    var markers = {};
+    function drawNode(){
+
+      for (var i = 0; i < myItems.length; i++) {
+        var item = myItems[i];
+        var marker = new L.marker([item['lat'],item['long']], {
+            icon: item['cat'],
+            url: item['id'],
+            title: item['title'],
+          }).bindPopup(`<h6>Title: ${item['title']}</h6><p>Description: ${item['desc']}</p>`);
+          markersLayer.addLayer(marker);
+          markers[item['id']] = marker;
+          marker.on('click', onClick);
+
+          console.log(marker)
+      }
+    }
+    drawNode();
+
+    // QUERY NODES
+    function searchNode(json){
+      console.log(json[0]);
+      var marker = new L.marker([json[0]['lat'], json[0]['lon']]).bindPopup(json[0]['tags']['name']);
+      markersLayer.addLayer(marker);
+    }
+
+
+    // REORIENT MAP INTO VIEW
+    $('tr').click(function(){
+      var row = document.getElementsByClassName('table-success');
+      if(row[0]){
+        row[0].className = '';
+      };
+      markers[this.id].openPopup();
+
+      // tableSelect($(this)[0].id);
+      this.className = 'table-success';
+    });
+
+    // SCROLL LIST INTO VIEW
+    function onClick(e) {
+      var row = document.getElementsByClassName('table-success');
+      if(row[0]){
+        row[0].className = '';
+      };
+      var get = document.getElementById(this.options.url);
+      get.scrollIntoView();
+      get.className = 'table-success';
+    }
+
+
+
+    // SEARCH BAR FUNCTIONALITY
+    var controlSearch = new L.Control.Search({
+      position: 'topleft',
+      layer: markersLayer,
+      initial: false, // search by initial letters only
+      zoom: 12,
+      //marker: false, //{animate: true},
+    });
+    mymap.addControl(controlSearch);
+
+    function sorch(text='Texas', city='', state='', country='US'){
+      let results = [];
+      $.ajax({
+        url: `http://overpass-api.de/api/interpreter?data=[out:json];node[name="${text}"];out;`,
+        type: 'GET',
+        data: {q: text},
+        dataType: 'json',
+        success: function(data){
+          console.log("in the callback", data);
+          // res(data);
+          for(element of data['elements']){
+            console.log('looping');
+            // console.log(element['tags']);
+            // console.log(element['ref']);
+            if(element['tags']['is_in:country_code'] == country){
+              results.push(element);
+              console.log(element);
+            };
+          };
+          console.log(results);
+          searchNode(results);
+          return results;
+        }
+      });
+
+    }
+
+    mymap.addControl(new L.Control.Search({
+      sourceData: sorch,
+      markerLocation: true,
+      zoom: 12,
+      // moveToLocation: true,
+      position: 'topright'
+    }));
+
+    // console.log(data);
+    // sorch(data);
+
+    L.control.sorch({position: 'topright'}).addTo(mymap);
+
+
+    // RESIZE THE MAP BASED ON THE WINDOW SIZE
+    $(window).on("resize", function() {
+        $("#mapid").height($(window).height()-150).width($(window).width()-75);
+        mymap.invalidateSize();
+    }).trigger("resize");
+
+    L.control.scale().addTo(mymap);
+
+    </script>
+  </body>
+</html>
