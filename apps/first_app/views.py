@@ -1,18 +1,24 @@
 from django.shortcuts import render, HttpResponse, redirect
-from time import gmtime, strftime
+# from time import gmtime, strftime
 from .models import User, Node, Category
-from decimal import Decimal
+# from decimal import Decimal
 # from .models import User, Message, Comment
 # import bcrypt
-import random
-import datetime
+# import random
+# import datetime
+
 
 def index(request):
+    return render(request, 'first_app/index.html')
+
+
+def dashboard(request):
     context = {
         'nodes': Node.objects.all()
     }
     print(context['nodes'][0].category.icon)
-    return render(request, 'first_app/index.html', context)
+    return render(request, 'first_app/dashboard.html', context)
+
 
 def process(request):
     print(request.POST)

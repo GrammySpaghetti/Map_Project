@@ -3,3 +3,10 @@
 
 # zip files
 *.zipdebug.log
+
+#postgres database
+/postgres
+
+#postgres login
+.env.secret
+.env
