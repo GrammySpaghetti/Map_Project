@@ -113,7 +113,7 @@
     });
 
 
-    // ADD NEW MARKER
+    // ADD NEW NODE
     function onMapClick(e) {
       popup
         .setLatLng(e.latlng)
@@ -142,7 +142,7 @@
     }
     mymap.on('click', onMapClick);
 
-    // DEFINE MARKER LAYER
+    // DEFINE NODE LAYER
     var markersLayer = new L.LayerGroup();
     mymap.addLayer(markersLayer);
     // CREATE MARKERS FROM DATABASE
@@ -152,7 +152,7 @@
       {% endfor %}
     ]
 
-    // ADD MARKERS FROM DATABASE
+    // DRAW NODES FROM DATABASE
     var markers = {};
     function drawNode(){
 
@@ -205,7 +205,7 @@
 
 
 
-    // SEARCH BAR FUNCTIONALITY
+    // SEARCH BAR FUNCTIONALITY FOR NODES IN DATABASE
     var controlSearch = new L.Control.Search({
       position: 'topleft',
       layer: markersLayer,
@@ -242,6 +242,7 @@
 
     }
 
+    // ADDING TEST SEARCH BAR TO QUERY OUTSIDE API FOR KNOWN LOCATIONS
     mymap.addControl(new L.Control.Search({
       sourceData: sorch,
       markerLocation: true,
